@@ -3,16 +3,33 @@
 // Quadcopter workshop for HU by Alten 18-03-2015
 #include "PID_v1.h"
 
+class FuzzyTriangle {
+public:
+    FuzzyTriangle(double begin, double end) :
+    begin(begin),
+    end(end),
+    middle((end-begin) / 2)
+    {}
+    double get_percentage(double fan_height) {
+        if (fan_height > end || fan_height < begin) {
+            return 0;
+        }
+        if (fan_height > middle) {
+            double delta = (100/(middle - end));
+            return 100 + ((fan_height - middle) * delta);
+        } else {
+            double delta = (100/(middle - begin));
+            return 0 + ((fan_height - middle) * delta);
+        }
+    }
+private:
+    double begin, end, middle;
+}
+
 //Fuzzy variable sets
-double l_height; //Low =
-double m_height;
-double h_height;
-
-
-//PID Parameters
-//const double  Kp = 60;
-//const double  Ki = 2*Kp / 10;
-//const double  Kd = Kp * 10 / 8;
+FuzzyTriangle low = FuzzyTriangle(3, 11);
+FuzzyTriangle middle = FuzzyTriangle(7, 15);
+FuzzyTriangle height = FuzzyTriangle(11, 19);
 
 // Interval (milliseconds) between sending analog data
 const int SampleTime = 50; // [ms]
@@ -32,30 +49,17 @@ double ActualHeightFan;
 double DesiredHeightFan = 11; // measure the height which you think the fan should be to balance [cm]
 double Motorout; // PID output
 
-/*Specify the PID input, setpoint and output
-* The input is the actual height of the fan [cm]
-* The setpoint is the desired height of the fan [cm]. The controller should get the actual height as close as possible to desired height.
-* The output is mapped to the pwm Motorout [0-255]
-*/
-PID PID_controller(&ActualHeightFan, &Motorout, &DesiredHeightFan,Kp,Ki,Kd, DIRECT);
-
-
 void setup(){
    pinMode(MotoroutPin, OUTPUT);          // configure motor output pin
    TCCR2B = TCCR2B & 0b11111000 | 0x01;   // set the PWM frequency , do not change!
 
    //configure tacho input to pin2, interrupt 0
    // Board       int.0  int.1
-   // Uno, Ethernet 2 3
+   // Uno, Ethernet 22 3
    pinMode(Tacho,INPUT_PULLUP);
    attachInterrupt(0, rpm_fan, RISING);
 
   Serial.begin(115200);                   // Open serial communications and wait for port to open:
-
-  //turn the PID on
-  PID_controller.SetSampleTime(SampleTime); // config sampletime
-  PID_controller.SetOutputLimits(0,255);    // Analogwrite PWM function is mapped between 0 and 255
-  PID_controller.SetMode(AUTOMATIC);
 
 }
 
@@ -89,11 +93,6 @@ void loop(){
 
     float rpm = 0.15 * (30000* half_revolutions /(SampleTime)) + 0.85 * rpm; // Digital Low pass filter with wcutoff ~ 1 hz.
     half_revolutions = 0;
-
-
-    //    Compute the new PID controller output
-    PID_controller.Compute();
-
 
     //write PWM to MotoroutPin to set the fan speed.
     //analogWrite(MotoroutPin,255);
