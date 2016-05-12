@@ -33,9 +33,12 @@ FuzzyTriangle low = FuzzyTriangle(3, 11);
 FuzzyTriangle middle = FuzzyTriangle(7, 15);
 FuzzyTriangle high = FuzzyTriangle(11, 19);
 
-FuzzyTriangle slow = FuzzyTriangle(0, 0);
-FuzzyTriangle moderate = FuzzyTriangle(0, 0);
-FuzzyTriangle fast = FuzzyTriangle(0, 0);
+FuzzyTriangle fast_n = FuzzyTriangle(-4, -10);
+FuzzyTriangle moderate_n = FuzzyTriangle(-2, -8);
+FuzzyTriangle slow_n = FuzzyTriangle(0, -6);
+FuzzyTriangle slow_p = FuzzyTriangle(0, 6);
+FuzzyTriangle moderate_p = FuzzyTriangle(2, 8);
+FuzzyTriangle fast_p = FuzzyTriangle(4, 10);
 
 double prev = 0;
 double time_elapsed = 1000;
@@ -63,7 +66,7 @@ void setup(){
    TCCR2B = TCCR2B & 0b11111000 | 0x01;   // set the PWM frequency , do not change!
 
    //configure tacho input to pin2, interrupt 0
-   // Board       int.0  int.1
+   // Board int.0  int.1
    // Uno, Ethernet 22 3
    pinMode(Tacho,INPUT_PULLUP);
    attachInterrupt(0, rpm_fan, RISING);
@@ -76,7 +79,8 @@ void setup(){
 void rpm_fan(){ half_revolutions++; }
 
 void loop(){
-  if ((millis() - LastSample) > SampleTime){
+  int delta_time = millis() - LastSample;
+  if (delta_time > SampleTime){
     LastSample = millis(); //current time
     int val =  analogRead(HeightSensor);
 
@@ -95,9 +99,8 @@ void loop(){
       Serial.print("High : "); Serial.print(high.get_percentage(ActualHeightSensor)); Serial.println("%");
       Serial.println();
       Serial.print("Actual height: "); Serial.print(ActualHeightSensor); Serial.println();
-      Serial.print("Increase of: "); Serial.print(((ActualHeightSensor - prev)));
+      Serial.print("Increase of: "); Serial.print(((ActualHeightSensor - prev) * delta_time) / 1000);
       Serial.println();
-      
       
       //Hoogste percentage veranderd de state?
       
