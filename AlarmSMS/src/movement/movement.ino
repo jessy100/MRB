@@ -18,20 +18,19 @@ void setup() {
 }
 
 void loop() {
-    Serial.print(counter);
-    Serial.write("\n");
     if ((millis() - last_alarm) > 20000) { // 20 seconden
         Serial.write("No movement in last 20 seconds \n");
     }
-
     if (minute) {
       if ((millis() - last_minute) > 60000) { // 1 minuut
           counter = 0;
           last_minute = millis();
           minute = false;
+          Serial.write("Minute reset");
+          Serial.write("\n");
       }
     }
-    if ((millis() - last_time) > 3000) { // 2 seconds
+    if ((millis() - last_time) > 2700) { // 2 seconds
         bool alarm = last_two_seconds();
         if (alarm) {
             if (!minute) {
@@ -45,7 +44,11 @@ void loop() {
                 counter = 0;
                 minute = false;
             }
+              Serial.write("Counter: ");
         }
+        Serial.print(counter);
+        Serial.write("\n");
+        Serial.write("\n");
         last_time = millis();
     }
 }
@@ -59,7 +62,11 @@ bool device_is_on() {
 }
 
 bool last_two_seconds() {
-  return analogRead(0) > 350;
+  int temp = analogRead(0);
+  Serial.write("Sensor value: ");
+  Serial.print(temp);
+  Serial.write("\n");
+  return temp > 400;
 }
 
 void send_sms(char text[]) {
