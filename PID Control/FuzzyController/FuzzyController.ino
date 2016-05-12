@@ -33,6 +33,13 @@ FuzzyTriangle low = FuzzyTriangle(3, 11);
 FuzzyTriangle middle = FuzzyTriangle(7, 15);
 FuzzyTriangle high = FuzzyTriangle(11, 19);
 
+FuzzyTriangle slow = FuzzyTriangle(0, 0);
+FuzzyTriangle moderate = FuzzyTriangle(0, 0);
+FuzzyTriangle fast = FuzzyTriangle(0, 0);
+
+double prev = 0;
+double time_elapsed = 1000;
+
 // Interval (milliseconds) between sending analog data
 const int SampleTime = 50; // [ms]
 int LastSample;
@@ -87,9 +94,16 @@ void loop(){
       Serial.print("Middle : "); Serial.print(middle.get_percentage(ActualHeightSensor)); Serial.println("%");
       Serial.print("High : "); Serial.print(high.get_percentage(ActualHeightSensor)); Serial.println("%");
       Serial.println();
-      Serial.print("Actual height: "); Serial.print(ActualHeightFan);
+      Serial.print("Actual height: "); Serial.print(ActualHeightSensor); Serial.println();
+      Serial.print("Increase of: "); Serial.print(((ActualHeightSensor - prev)));
       Serial.println();
+      
+      
+      //Hoogste percentage veranderd de state?
+      
       delay(1000);
+      prev = ActualHeightSensor;
+      
     // check the diffrence between the actual heigh and the desired heght to v
     float Error = DesiredHeightFan - ActualHeightFan;
 
