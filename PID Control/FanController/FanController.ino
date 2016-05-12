@@ -71,7 +71,7 @@ void sendPlotData(String seriesName, float data){
   Serial.println("}");
 }
 
-void loop() // loop forever{
+void loop() {
   if ((millis() - LastSample) > SampleTime){
     LastSample = millis(); //current time
 

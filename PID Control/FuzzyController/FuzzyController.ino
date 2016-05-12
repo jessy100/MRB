@@ -8,28 +8,30 @@ public:
     FuzzyTriangle(double begin, double end) :
     begin(begin),
     end(end),
-    middle((end-begin) / 2)
+    middle(((end-begin) / 2) + begin)
     {}
     double get_percentage(double fan_height) {
-        if (fan_height > end || fan_height < begin) {
-            return 0;
-        }
-        if (fan_height > middle) {
-            double delta = (100/(middle - end));
-            return 100 + ((fan_height - middle) * delta);
-        } else {
-            double delta = (100/(middle - begin));
-            return 0 + ((fan_height - middle) * delta);
-        }
+        double delta;
+      
+        if (fan_height > middle) 
+             delta = (100/(middle - end));
+        else
+             delta = (100/(middle + begin));
+
+        float returnPer = 100 + ((fan_height - middle) * delta);
+        if(returnPer < 0)
+          return 0;
+          
+        return returnPer;
     }
 private:
     double begin, end, middle;
-}
+};
 
-//Fuzzy variable sets
+//Fuzzy variable set
 FuzzyTriangle low = FuzzyTriangle(3, 11);
 FuzzyTriangle middle = FuzzyTriangle(7, 15);
-FuzzyTriangle height = FuzzyTriangle(11, 19);
+FuzzyTriangle high = FuzzyTriangle(11, 19);
 
 // Interval (milliseconds) between sending analog data
 const int SampleTime = 50; // [ms]
@@ -66,15 +68,6 @@ void setup(){
 /* this code will be executed every time the interrupt 0 (pin2) gets high.*/
 void rpm_fan(){ half_revolutions++; }
 
-// function that sends data with corresponding label to the serial port for visualisation in format of Megunolink
-void sendPlotData(String seriesName, float data){
-  Serial.print("{TIMEPLOT|data|");
-  Serial.print(seriesName);
-  Serial.print("|T|");
-  Serial.print(data);
-  Serial.println("}");
-}
-
 void loop(){
   if ((millis() - LastSample) > SampleTime){
     LastSample = millis(); //current time
@@ -88,6 +81,15 @@ void loop(){
     //from the height of the sensor, compute the height of the fan (will be more convenient for control later on):
     ActualHeightFan     = 20 - ActualHeightSensor;
 
+    //write the fan height to the screen:
+   // Serial.println(ActualHeightFan);
+      Serial.print("Low : "); Serial.print(low.get_percentage(ActualHeightSensor)); Serial.println("%");
+      Serial.print("Middle : "); Serial.print(middle.get_percentage(ActualHeightSensor)); Serial.println("%");
+      Serial.print("High : "); Serial.print(high.get_percentage(ActualHeightSensor)); Serial.println("%");
+      Serial.println();
+      Serial.print("Actual height: "); Serial.print(ActualHeightFan);
+      Serial.println();
+      delay(1000);
     // check the diffrence between the actual heigh and the desired heght to v
     float Error = DesiredHeightFan - ActualHeightFan;
 
@@ -95,11 +97,11 @@ void loop(){
     half_revolutions = 0;
 
     //write PWM to MotoroutPin to set the fan speed.
-    //analogWrite(MotoroutPin,255);
-    analogWrite(MotoroutPin,Motorout);
+    analogWrite(MotoroutPin,1.1);
+    //analogWrite(MotoroutPin,Motorout);
 
-    sendPlotData("ActualHeightFan",ActualHeightFan);
-    sendPlotData("Motorout",Motorout);
-    sendPlotData("Error",Error);
+    //sendPlotData("ActualHeightFan",ActualHeightFan);
+    //sendPlotData("Motorout",Motorout);
+    //sendPlotData("Error",Error);
   }
 }
