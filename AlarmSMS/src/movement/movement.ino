@@ -1,6 +1,7 @@
 unsigned long last_time = millis();
 unsigned long last_minute = millis();
 unsigned long last_alarm = millis();
+bool minute = false;
 int counter = 0;
 
 #include <SoftwareSerial.h>
@@ -23,18 +24,26 @@ void loop() {
         Serial.write("No movement in last 20 seconds \n");
     }
 
-    if ((millis() - last_minute) > 60000) { // 1 minuut
-        counter = 0;
-        last_minute = millis();
+    if (minute) {
+      if ((millis() - last_minute) > 60000) { // 1 minuut
+          counter = 0;
+          last_minute = millis();
+          minute = false;
+      }
     }
-    if ((millis() - last_time) > 2000) { // 2 seconds
+    if ((millis() - last_time) > 3000) { // 2 seconds
         bool alarm = last_two_seconds();
         if (alarm) {
+            if (!minute) {
+              minute = true;
+              last_minute = millis();
+            }
             last_alarm = millis();
             counter++;
-            if (counter > 10) {
+            if (counter >= 10) {
                 send_sms("10 movements in 1 minute!");
                 counter = 0;
+                minute = false;
             }
         }
         last_time = millis();
