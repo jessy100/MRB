@@ -3,7 +3,7 @@
 // Quadcopter workshop for HU by Alten 18-03-2015
 #include "PID_v1.h"
 
-enum class HeightState {
+enum HeightState {
   L,
   M,
   H,
@@ -35,16 +35,9 @@ private:
 };
 
 //Fuzzy variable set
-FuzzyTriangle low = FuzzyTriangle(3, 11);
-FuzzyTriangle middle = FuzzyTriangle(7, 15);
-FuzzyTriangle high = FuzzyTriangle(11, 19);
-
-//FuzzyTriangle fast_n = FuzzyTriangle(-4, -10);
-//FuzzyTriangle moderate_n = FuzzyTriangle(-2, -8);
-//FuzzyTriangle slow_n = FuzzyTriangle(0, -6);
-FuzzyTriangle slow_p = FuzzyTriangle(0, 6);
-FuzzyTriangle moderate_p = FuzzyTriangle(2, 8);
-FuzzyTriangle fast_p = FuzzyTriangle(4, 10);
+FuzzyTriangle low = FuzzyTriangle(1, 9);
+FuzzyTriangle middle = FuzzyTriangle(5, 11);
+FuzzyTriangle high = FuzzyTriangle(7, 15);
 
 double prev = 0;
 double time_elapsed = 1000;
@@ -103,10 +96,7 @@ void loop(){
       Serial.print("Middle : "); Serial.print(middle.get_percentage(ActualHeightSensor)); Serial.println("%");
       Serial.print("High : "); Serial.print(high.get_percentage(ActualHeightSensor)); Serial.println("%");
       Serial.println();
-      Serial.print("Actual height: "); Serial.print(ActualHeightSensor); Serial.println();
-      Serial.print("Increase of: "); Serial.print(((ActualHeightSensor - prev) * delta_time) / 1000);
-      Serial.println();
-
+      
       double low_value = low.get_percentage(ActualHeightSensor);
       double mid_value = middle.get_percentage(ActualHeightSensor);
       double high_value = high.get_percentage(ActualHeightSensor);
@@ -148,26 +138,30 @@ void loop(){
 
 
       if (highest == HeightState::M) {
-        if (mid_value > 90) {
-          analogWrite(MotoroutPin,150);
-        }
-        else if (second == HeightState::L) {
+        if (mid_value > 95) {
           analogWrite(MotoroutPin,175);
         }
+        else if (second == HeightState::L) {
+          analogWrite(MotoroutPin,145);
+        }
         else {
-          analogWrite(MotoroutPin,125);
+          analogWrite(MotoroutPin,240);
         }
       }
       else if (highest == HeightState::L) {
-          analogWrite(MotoroutPin, 200);
+          analogWrite(MotoroutPin, 100);
       }
       else {
-        analogWrite(MotoroutPin, 100);
+        analogWrite(MotoroutPin, 255);
       }
+
+      Serial.print("Highest: "); Serial.print(highest); Serial.println("");
+      Serial.print("Second : "); Serial.print(second); Serial.println("");
+      Serial.println();
  
       
       
-      delay(1000);
+    //  delay(1000);
       prev = ActualHeightSensor;
       
     // check the diffrence between the actual heigh and the desired heght to v
