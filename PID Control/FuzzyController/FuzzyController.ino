@@ -3,6 +3,12 @@
 // Quadcopter workshop for HU by Alten 18-03-2015
 #include "PID_v1.h"
 
+enum class HeightState {
+  L,
+  M,
+  H,
+};
+
 class FuzzyTriangle {
 public:
     FuzzyTriangle(double begin, double end) :
@@ -33,9 +39,9 @@ FuzzyTriangle low = FuzzyTriangle(3, 11);
 FuzzyTriangle middle = FuzzyTriangle(7, 15);
 FuzzyTriangle high = FuzzyTriangle(11, 19);
 
-FuzzyTriangle fast_n = FuzzyTriangle(-4, -10);
-FuzzyTriangle moderate_n = FuzzyTriangle(-2, -8);
-FuzzyTriangle slow_n = FuzzyTriangle(0, -6);
+//FuzzyTriangle fast_n = FuzzyTriangle(-4, -10);
+//FuzzyTriangle moderate_n = FuzzyTriangle(-2, -8);
+//FuzzyTriangle slow_n = FuzzyTriangle(0, -6);
 FuzzyTriangle slow_p = FuzzyTriangle(0, 6);
 FuzzyTriangle moderate_p = FuzzyTriangle(2, 8);
 FuzzyTriangle fast_p = FuzzyTriangle(4, 10);
@@ -64,7 +70,6 @@ double Motorout; // PID output
 void setup(){
    pinMode(MotoroutPin, OUTPUT);          // configure motor output pin
    TCCR2B = TCCR2B & 0b11111000 | 0x01;   // set the PWM frequency , do not change!
-
    //configure tacho input to pin2, interrupt 0
    // Board int.0  int.1
    // Uno, Ethernet 22 3
@@ -101,8 +106,66 @@ void loop(){
       Serial.print("Actual height: "); Serial.print(ActualHeightSensor); Serial.println();
       Serial.print("Increase of: "); Serial.print(((ActualHeightSensor - prev) * delta_time) / 1000);
       Serial.println();
+
+      double low_value = low.get_percentage(ActualHeightSensor);
+      double mid_value = middle.get_percentage(ActualHeightSensor);
+      double high_value = high.get_percentage(ActualHeightSensor);
+
+      HeightState highest = HeightState::L;
+      HeightState second = HeightState::L;
       
-      //Hoogste percentage veranderd de state?
+      if (mid_value > high_value && mid_value > low_value) {
+        highest = HeightState::M;
+      }
+      else if (high_value > mid_value && high_value > low_value) {
+        highest = HeightState::H;
+      }
+
+
+      //Second
+      if (mid_value > high_value && high_value > low_value) {
+        second = HeightState::H;
+      }
+      if (low_value > high_value && high_value > mid_value) {
+        second = HeightState::H;
+      }
+
+      //Middle
+      if (high_value > mid_value && mid_value > low_value) {
+        second = HeightState::M;
+      }
+      if (low_value > mid_value && mid_value > high_value) {
+        second = HeightState::M;
+      }
+
+      //Low
+      if (mid_value > low_value && low_value > high_value) {
+        second = HeightState::L;
+      }
+      if (high_value > low_value && low_value > mid_value) {
+        second = HeightState::L;
+      }
+
+
+      if (highest == HeightState::M) {
+        if (mid_value > 90) {
+          analogWrite(MotoroutPin,150);
+        }
+        else if (second == HeightState::L) {
+          analogWrite(MotoroutPin,175);
+        }
+        else {
+          analogWrite(MotoroutPin,125);
+        }
+      }
+      else if (highest == HeightState::L) {
+          analogWrite(MotoroutPin, 200);
+      }
+      else {
+        analogWrite(MotoroutPin, 100);
+      }
+ 
+      
       
       delay(1000);
       prev = ActualHeightSensor;
@@ -114,7 +177,7 @@ void loop(){
     half_revolutions = 0;
 
     //write PWM to MotoroutPin to set the fan speed.
-    analogWrite(MotoroutPin,1.1);
+    //analogWrite(MotoroutPin,1.1);
     //analogWrite(MotoroutPin,Motorout);
 
     //sendPlotData("ActualHeightFan",ActualHeightFan);
